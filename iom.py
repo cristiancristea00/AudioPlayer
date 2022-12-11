@@ -1,13 +1,28 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Iterable
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtCore import QUrl
-from PyQt6.QtGui import QAction, QFont, QIcon
-from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
-from PyQt6.QtWidgets import QApplication, QFileDialog, QHBoxLayout, QListWidget, QMainWindow, QPushButton, QStyle, QVBoxLayout, QWidget
+from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QIcon
+from PyQt6.QtMultimedia import QAudioOutput
+from PyQt6.QtMultimedia import QMediaPlayer
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QHBoxLayout
+from PyQt6.QtWidgets import QListWidget
+from PyQt6.QtWidgets import QListWidgetItem
+from PyQt6.QtWidgets import QMainWindow
+from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtWidgets import QStyle
+from PyQt6.QtWidgets import QVBoxLayout
+from PyQt6.QtWidgets import QWidget
 
 
 class Playlist:
@@ -66,6 +81,7 @@ class MusicPlayer(QMainWindow):
         self.setFixedSize(500, 400)
 
         self.font = QFont('Arial', 14)
+        self.bold_font = QFont('Arial', 15, QFont.Weight.Bold)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -134,12 +150,27 @@ class MusicPlayer(QMainWindow):
         volume_control.addWidget(button_volume_up)
 
         self.song_list = QListWidget()
+        self.song_list.setFont(self.font)
         self.layout.addWidget(self.song_list)
 
         self.audio_output = QAudioOutput()
         self.player = QMediaPlayer()
         self.player.setAudioOutput(self.audio_output)
         self.audio_output.setVolume(0.5)
+
+    @staticmethod
+    def remove_extension(file_name: str) -> str:
+        return file_name[:file_name.rfind('.')]
+
+    def set_song_and_play(self, song: str) -> None:
+        song_title = song.split(os.sep)[-1]
+        song_title = self.remove_extension(song_title)
+        song_in_list = self.song_list.findItems(song_title, Qt.MatchFlag.MatchExactly)
+        self.song_list.currentItem().setFont(self.font)
+        self.song_list.setCurrentItem(song_in_list[0])
+        self.song_list.currentItem().setFont(self.bold_font)
+        self.player.setSource(QUrl.fromLocalFile(song))
+        self.player.play()
 
     def play(self) -> None:
         self.player.play()
@@ -162,26 +193,21 @@ class MusicPlayer(QMainWindow):
 
     def previous(self) -> None:
         if self.player.position() <= 5000 and self.playlist.previous_song is not None:
-            self.player.setSource(QUrl.fromLocalFile(self.playlist.get_previous_song()))
-            self.player.play()
+            self.set_song_and_play(self.playlist.get_previous_song())
         else:
             self.player.setPosition(0)
             self.player.play()
 
     def next(self) -> None:
         if self.playlist.next_song is not None:
-            self.player.setSource(QUrl.fromLocalFile(self.playlist.get_next_song()))
-            self.player.play()
+            self.set_song_and_play(self.playlist.get_next_song())
 
     def ensure_stopped(self) -> None:
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.player.stop()
 
-    @staticmethod
-    def remove_extension(file_name: str) -> str:
-        return file_name[:file_name.rfind('.')]
-
     def open(self) -> None:
+        self.ensure_stopped()
         file_dialog = QFileDialog(self)
 
         name_filter = 'Audio files (*.mp3 *.wav *.ogg *.flac *.aac)'
@@ -197,9 +223,19 @@ class MusicPlayer(QMainWindow):
 
             self.song_list.clear()
             song_names = (song.name for song in self.playlist.songs)
-            self.song_list.addItems(map(self.remove_extension, song_names))
+            song_names = map(self.remove_extension, song_names)
+            song_names = (QListWidgetItem(name, self.song_list) for name in song_names)
+            for item in song_names:
+                item.setFlags(~Qt.ItemFlag.ItemIsEnabled)
+            self.song_list.addItems(song_names)
 
         self.player.setSource(QUrl.fromLocalFile(str(self.playlist.songs[0])))
+        self.song_list.setCurrentItem(self.song_list.item(0))
+        self.song_list.currentItem().setFont(self.bold_font)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.ensure_stopped()
+        event.accept()
 
 
 def main() -> None:
