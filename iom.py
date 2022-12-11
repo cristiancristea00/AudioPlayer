@@ -19,7 +19,9 @@ from PyQt6.QtWidgets import QHBoxLayout
 from PyQt6.QtWidgets import QListWidget
 from PyQt6.QtWidgets import QListWidgetItem
 from PyQt6.QtWidgets import QMainWindow
+from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtWidgets import QSlider
 from PyQt6.QtWidgets import QStyle
 from PyQt6.QtWidgets import QVBoxLayout
 from PyQt6.QtWidgets import QWidget
@@ -69,16 +71,28 @@ class Playlist:
         return None
 
 
+class AboutProjectWindow(QMessageBox):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setWindowTitle('About Project')
+        self.setText('This is a simple audio player written in Python using PyQt6.')
+        self.setInformativeText('This project was created by:\nCristian Cristea & Cosmin Preotesei\nGroup 442A')
+        self.setStandardButtons(QMessageBox.StandardButton.Ok)
+
+
 class MusicPlayer(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
 
+        self.about_project_window: AboutProjectWindow = AboutProjectWindow()
+
         self.playlist: Playlist = Playlist()
 
-        self.setWindowTitle("Audio player")
+        self.setWindowTitle('Audio player')
 
-        self.setFixedSize(500, 400)
+        self.setFixedSize(600, 600)
 
         self.font = QFont('Arial', 14)
         self.bold_font = QFont('Arial', 15, QFont.Weight.Bold)
@@ -88,62 +102,79 @@ class MusicPlayer(QMainWindow):
 
         file_menu = self.menuBar().addMenu('File')
 
-        open_action = QAction(text='Open', parent=self, shortcut='Ctrl+O', triggered=self.open)
+        open_action = QAction(text='&Open', parent=self, shortcut='Ctrl+O', triggered=self.open)
         file_menu.addAction(open_action)
 
-        close_action = QAction(text='Close', parent=self, shortcut='Ctrl+Q', triggered=self.close)
+        close_action = QAction(text='&Close', parent=self, shortcut='Ctrl+Q', triggered=self.close)
         file_menu.addAction(close_action)
 
         about_menu = self.menuBar().addMenu('About')
-        about_qt_action = QAction(text='About Qt', parent=self, triggered=QApplication.instance().aboutQt)
-        about_menu.addAction(about_qt_action)
 
-        about_project_action = QAction('About project', self)
+        about_project_action = QAction('About &Project', self, triggered=self.about_project)
         about_menu.addAction(about_project_action)
+
+        about_qt_action = QAction(text='About &Qt', parent=self, triggered=QApplication.instance().aboutQt)
+        about_menu.addAction(about_qt_action)
 
         self.layout = QVBoxLayout()
         central_widget.setLayout(self.layout)
 
+        audio_position = QHBoxLayout()
+        self.layout.addLayout(audio_position)
+
+        self.slider = QSlider(Qt.Orientation.Horizontal)
+        self.slider.setRange(0, 0)
+        self.slider.setFixedHeight(40)
+        self.slider.sliderMoved.connect(self.set_position)
+        audio_position.addWidget(self.slider)
+
         audio_control = QHBoxLayout()
         self.layout.addLayout(audio_control)
 
-        play_icon = QIcon.fromTheme("media-playback-start", self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+        play_icon = QIcon.fromTheme('media-playback-start', self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
         play_button = QPushButton(text=' Play', icon=play_icon, clicked=self.play)
         play_button.setFont(self.font)
+        play_button.setFixedHeight(40)
         audio_control.addWidget(play_button)
 
-        pause_icon = QIcon.fromTheme("media-playback-pause", self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
+        pause_icon = QIcon.fromTheme('media-playback-pause', self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
         pause_button = QPushButton(text=' Pause', icon=pause_icon, clicked=self.pause)
         pause_button.setFont(self.font)
+        pause_button.setFixedHeight(40)
         audio_control.addWidget(pause_button)
 
         song_control = QHBoxLayout()
         self.layout.addLayout(song_control)
 
-        previous_icon = QIcon.fromTheme("media-skip-backward", self.style().standardIcon(QStyle.StandardPixmap.SP_MediaSkipBackward))
+        previous_icon = QIcon.fromTheme('media-skip-backward', self.style().standardIcon(QStyle.StandardPixmap.SP_MediaSkipBackward))
         previous_button = QPushButton(text=' Previous', icon=previous_icon, clicked=self.previous)
         previous_button.setFont(self.font)
+        previous_button.setFixedHeight(40)
         song_control.addWidget(previous_button)
 
-        next_icon = QIcon.fromTheme("media-skip-forward", self.style().standardIcon(QStyle.StandardPixmap.SP_MediaSkipForward))
+        next_icon = QIcon.fromTheme('media-skip-forward', self.style().standardIcon(QStyle.StandardPixmap.SP_MediaSkipForward))
         next_button = QPushButton(text=' Next', icon=next_icon, clicked=self.next)
         next_button.setFont(self.font)
+        next_button.setFixedHeight(40)
         song_control.addWidget(next_button)
 
         volume_control = QHBoxLayout()
         self.layout.addLayout(volume_control)
 
-        volume_up_icon = QIcon.fromTheme("audio-volume-high", self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
+        volume_up_icon = QIcon.fromTheme('audio-volume-high', self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
         button_volume_up = QPushButton(text=' Volume up', icon=volume_up_icon, clicked=self.volume_up)
         button_volume_up.setFont(self.font)
+        button_volume_up.setFixedHeight(40)
 
-        volume_down_icon = QIcon.fromTheme("audio-volume-low", self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
+        volume_down_icon = QIcon.fromTheme('audio-volume-low', self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
         button_volume_down = QPushButton(text=' Volume down', icon=volume_down_icon, clicked=self.volume_down)
         button_volume_down.setFont(self.font)
+        button_volume_down.setFixedHeight(40)
 
-        mute_icon = QIcon.fromTheme("audio-volume-muted", self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
+        mute_icon = QIcon.fromTheme('audio-volume-muted', self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
         button_volume_mute = QPushButton(text=' Mute', icon=mute_icon, clicked=self.mute)
         button_volume_mute.setFont(self.font)
+        button_volume_mute.setFixedHeight(40)
 
         volume_control.addWidget(button_volume_down)
         volume_control.addWidget(button_volume_mute)
@@ -158,9 +189,21 @@ class MusicPlayer(QMainWindow):
         self.player.setAudioOutput(self.audio_output)
         self.audio_output.setVolume(0.5)
 
+        self.player.positionChanged.connect(self.position_changed)
+        self.player.durationChanged.connect(self.duration_changed)
+
     @staticmethod
     def remove_extension(file_name: str) -> str:
         return file_name[:file_name.rfind('.')]
+
+    def set_position(self, position: int) -> None:
+        self.player.setPosition(position)
+
+    def position_changed(self, position: int) -> None:
+        self.slider.setValue(position)
+
+    def duration_changed(self, duration: int) -> None:
+        self.slider.setRange(0, duration)
 
     def set_song_and_play(self, song: str) -> None:
         song_title = song.split(os.sep)[-1]
@@ -233,8 +276,12 @@ class MusicPlayer(QMainWindow):
         self.song_list.setCurrentItem(self.song_list.item(0))
         self.song_list.currentItem().setFont(self.bold_font)
 
+    def about_project(self) -> None:
+        self.about_project_window.show()
+
     def closeEvent(self, event: QCloseEvent) -> None:
         self.ensure_stopped()
+        self.about_project_window.close()
         event.accept()
 
 
