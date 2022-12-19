@@ -125,12 +125,12 @@ class Playlist:
 
 class AboutProjectWindow(QMessageBox):
     """
-    Class that represents the about project window.
+    Class that represents the "about project" window.
     """
 
     def __init__(self) -> None:
         """
-        Initialize the about project window by setting the title and the text.
+        Initialize the "about project" window by setting the title and the text.
         """
 
         super().__init__()
@@ -153,7 +153,7 @@ class MusicPlayer(QMainWindow):
 
         super().__init__()
 
-        # Initialize the about project window
+        # Initialize the "about project" window
         self.about_project_window: AboutProjectWindow = AboutProjectWindow()
 
         # Initialize the playlist
@@ -187,11 +187,11 @@ class MusicPlayer(QMainWindow):
         # Add the about menu to the menu bar
         about_menu = self.menuBar().addMenu('About')
 
-        # Initialize and add the about project action to the about menu
+        # Initialize and add the "about project" action to the about menu
         about_project_action = QAction('About &Project', self, triggered=self.about_project)
         about_menu.addAction(about_project_action)
 
-        # Initialize and add the about Qt action to the about menu
+        # Initialize and add the "about Qt" action to the about menu
         about_qt_action = QAction(text='About &Qt', parent=self, triggered=QApplication.instance().aboutQt)
         about_menu.addAction(about_qt_action)
 
@@ -199,7 +199,7 @@ class MusicPlayer(QMainWindow):
         self.layout = QVBoxLayout()
         central_widget.setLayout(self.layout)
 
-        # Initialize the laout for the song progress bar
+        # Initialize the layout for the song progress bar
         audio_position = QHBoxLayout()
         self.layout.addLayout(audio_position)
 
@@ -323,6 +323,10 @@ class MusicPlayer(QMainWindow):
         """
 
         self.slider.setValue(position)
+
+        # If the song has ended, play the next song
+        if position == self.player.duration():
+            self.next()
 
     def duration_changed(self, duration: int) -> None:
         """
@@ -458,14 +462,14 @@ class MusicPlayer(QMainWindow):
 
     def about_project(self) -> None:
         """
-        Show the about project window.
+        Show the "about project" window.
         """
 
         self.about_project_window.show()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """
-        Ensure that the player is stopped and close the about project window.
+        Ensure that the player is stopped and close the "about project" window.
 
         Args:
             event (QCloseEvent): The close event
